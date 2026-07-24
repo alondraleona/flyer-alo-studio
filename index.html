@@ -142,19 +142,9 @@
                     <span>Logo de la Marca</span>
                     <span class="text-[10px] text-amber-400 font-normal">PNG / SVG / JPG</span>
                 </label>
-                
-                <!-- Toggle Logo Type -->
-                <div class="grid grid-cols-2 gap-2">
-                    <button id="btn-logo-type-text" onclick="setLogoType('text')" class="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-blue-500 bg-blue-600/20 text-blue-300">
-                        Logo Vectorial
-                    </button>
-                    <button id="btn-logo-type-img" onclick="setLogoType('image')" class="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-700 bg-slate-900 text-slate-400 hover:text-white">
-                        Subir Imagen PNG
-                    </button>
-                </div>
 
-                <!-- File Upload Box (Hidden by default until 'image' is chosen or used directly) -->
-                <div id="logo-upload-box" class="space-y-3 hidden pt-1">
+                <!-- File Upload Box -->
+                <div id="logo-upload-box" class="space-y-3 pt-1">
                     <p class="text-[10px] text-slate-500 leading-relaxed">Sube una versión del logo para cada fondo, así siempre se lee bien al cambiar de tema.</p>
 
                     <div class="grid grid-cols-2 gap-2">
@@ -267,7 +257,10 @@
 
                             <!-- Uploaded Image Logo View -->
                             <div id="logo-image-view" class="hidden">
-                                <img id="logo-custom-img" src="" alt="Logo aló studio" class="h-[65px] object-contain max-w-[260px]">
+                                <img id="logo-custom-img" src="" alt="Logo aló studio" class="hidden h-[65px] object-contain max-w-[260px]">
+                                <div id="logo-placeholder" class="h-[65px] min-w-[160px] border-2 border-dashed border-slate-600 rounded-lg flex items-center justify-center text-[11px] text-slate-400 px-3 text-center">
+                                    Sube tu logo en el panel izquierdo
+                                </div>
                             </div>
 
                         </div>
@@ -386,35 +379,13 @@
 
     <!-- JS Logic -->
     <script>
-        let currentLogoType = 'text';
         let currentTheme = 'dark';
         let logoImages = { dark: null, light: null };
 
-        // Toggle between Vector/Text logo and Custom Uploaded Image
-        function setLogoType(type) {
-            currentLogoType = type;
-            const vectorView = document.getElementById('logo-vector-view');
-            const imageView = document.getElementById('logo-image-view');
-            const uploadBox = document.getElementById('logo-upload-box');
-            
-            const btnText = document.getElementById('btn-logo-type-text');
-            const btnImg = document.getElementById('btn-logo-type-img');
-
-            if (type === 'image') {
-                vectorView.classList.add('hidden');
-                imageView.classList.remove('hidden');
-                uploadBox.classList.remove('hidden');
-
-                btnImg.className = "px-2.5 py-1.5 text-xs font-medium rounded-lg border border-blue-500 bg-blue-600/20 text-blue-300";
-                btnText.className = "px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-700 bg-slate-900 text-slate-400 hover:text-white";
-            } else {
-                vectorView.classList.remove('hidden');
-                imageView.classList.add('hidden');
-                uploadBox.classList.add('hidden');
-
-                btnText.className = "px-2.5 py-1.5 text-xs font-medium rounded-lg border border-blue-500 bg-blue-600/20 text-blue-300";
-                btnImg.className = "px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-700 bg-slate-900 text-slate-400 hover:text-white";
-            }
+        // Only the uploaded-image logo is supported; the vector wordmark view stays hidden.
+        function initLogoView() {
+            document.getElementById('logo-vector-view').classList.add('hidden');
+            document.getElementById('logo-image-view').classList.remove('hidden');
         }
 
         // Handle Image Upload (separate logo per theme so it stays legible on both backgrounds)
@@ -432,7 +403,6 @@
                 const filenameEl = document.getElementById(mode === 'dark' ? 'logo-dark-filename' : 'logo-light-filename');
                 if (filenameEl) filenameEl.textContent = file.name;
 
-                setLogoType('image');
                 applyLogoForTheme(currentTheme);
             };
             reader.readAsDataURL(file);
@@ -441,8 +411,17 @@
         // Show the logo variant matching the active theme
         function applyLogoForTheme(theme) {
             const imgElement = document.getElementById('logo-custom-img');
+            const placeholder = document.getElementById('logo-placeholder');
             const src = logoImages[theme] || logoImages.dark || logoImages.light;
-            if (src) imgElement.src = src;
+
+            if (src) {
+                imgElement.src = src;
+                imgElement.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                imgElement.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
         }
 
         // Adjust Logo Size Slider
@@ -573,6 +552,8 @@
 
         // Initial setup
         window.onload = function() {
+            initLogoView();
+            applyLogoForTheme(currentTheme);
             updateFlyer();
             updateQR();
         };
