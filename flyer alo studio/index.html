@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flyer Imprimible - aló studio</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        alo: {
+                            dark: '#1A1F26',
+                            card: '#242B35',
+                            blue: '#2563EB',
+                            'blue-hover': '#1D4ED8',
+                            yellow: '#F59E0B',
+                            yellowLight: '#FBBF24',
+                            gray: '#6B7280',
+                            lightBg: '#F8FAFC'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* Print styles */
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-area {
+                box-shadow: none !important;
+                border: none !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                max-width: none !important;
+                padding: 12mm 15mm !important;
+                margin: 0 !important;
+                border-radius: 0 !important;
+                page-break-after: always;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+        }
+
+        /* Smooth canvas preview styling */
+        .flyer-aspect {
+            aspect-ratio: 1 / 1.4142; /* Standard A4 ratio */
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col antialiased">
+
+    <!-- Top Navigation / Controls (Hidden in Print) -->
+    <header class="no-print bg-slate-800/80 backdrop-blur border-b border-slate-700 sticky top-0 z-50 py-3 px-4 sm:px-8 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <!-- Brand Mark -->
+            <div class="flex items-center gap-1 font-bold text-xl tracking-tight text-white">
+                <span class="text-2xl font-black">aló</span>
+                <svg class="w-5 h-5 text-blue-500 -mt-2 -ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M7 17L17 7M17 7H9M17 7V15"/>
+                </svg>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium">Estudio Digital & IA</span>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap">
+            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2 cursor-pointer active:scale-95">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                Imprimir / Guardar PDF
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        <!-- Controls Sidebar (Hidden in Print) -->
+        <div class="no-print lg:col-span-4 bg-slate-800 border border-slate-700/80 rounded-2xl p-5 shadow-xl space-y-5">
+            <div class="border-b border-slate-700/80 pb-3">
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    Personalizar Contenido
+                </h2>
+                <p class="text-xs text-slate-400 mt-1">Modifica los datos para actualizar el diseño en tiempo real.</p>
+            </div>
+
+            <!-- Style Selector -->
+            <div class="space-y-1.5">
+                <label class="text-xs font-semibold uppercase tracking-wider text-slate-300">Tema del Flyer</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="btn-theme-dark" onclick="setTheme('dark')" class="px-3 py-2 text-xs font-semibold rounded-lg border border-blue-500 bg-slate-900 text-white flex items-center justify-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-500"></span> Dark Tech
+                    </button>
+                    <button id="btn-theme-light" onclick="setTheme('light')" class="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-600 bg-slate-700 text-slate-300 flex items-center justify-center gap-2 hover:bg-slate-600">
+                        <span class="w-2.5 h-2.5 rounded-full bg-white"></span> Blanco Limpio
+                    </button>
+                </div>
+            </div>
+
+            <!-- Logo Selector & Uploader Section -->
+            <div class="space-y-2 border-t border-b border-slate-700/80 py-3">
+                <label class="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center justify-between">
+                    <span>Logo de la Marca</span>
+                    <span class="text-[10px] text-amber-400 font-normal">PNG / SVG / JPG</span>
+                </label>
+                
+                <!-- Toggle Logo Type -->
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="btn-logo-type-text" onclick="setLogoType('text')" class="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-blue-500 bg-blue-600/20 text-blue-300">
+                        Logo Vectorial
+                    </button>
+                    <button id="btn-logo-type-img" onclick="setLogoType('image')" class="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-700 bg-slate-900 text-slate-400 hover:text-white">
+                        Subir Imagen PNG
+                    </button>
+                </div>
+
+                <!-- File Upload Box (Hidden by default until 'image' is chosen or used directly) -->
+                <div id="logo-upload-box" class="space-y-2 hidden pt-1">
+                    <div class="flex items-center justify-center w-full">
+                        <label class="flex flex-col items-center justify-center w-full h-20 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-900/60 hover:bg-slate-900 hover:border-blue-500 transition-all">
+                            <div class="flex flex-col items-center justify-center pt-2 pb-2">
+                                <svg class="w-6 h-6 text-slate-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <p class="text-xs text-slate-300 font-medium">Seleccionar imagen PNG</p>
+                                <p class="text-[10px] text-slate-500">Fondo transparente recomendado</p>
+                            </div>
+                            <input id="input-logo-file" type="file" accept="image/*" onchange="handleLogoUpload(event)" class="hidden" />
+                        </label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <label class="text-[11px] text-slate-400 shrink-0">Alto del logo:</label>
+                        <input type="range" id="input-logo-height" min="30" max="110" value="65" oninput="updateLogoSize()" class="w-full accent-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phone / WhatsApp Input -->
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-300">Teléfono / WhatsApp</label>
+                <input type="text" id="input-phone" value="+51 987 654 321" oninput="updateFlyer()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <!-- Website Input -->
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-300">Sitio Web / Usuario</label>
+                <input type="text" id="input-web" value="www.alostudio.com" oninput="updateFlyer()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <!-- Headline Input -->
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-300">Titular Principal</label>
+                <input type="text" id="input-headline" value="¿Quieres digitalizar tu negocio y vender más?" oninput="updateFlyer()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <!-- Promotion / Offer Text -->
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-300">Gancho / Regalo Especial</label>
+                <textarea id="input-offer" rows="2" oninput="updateFlyer()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">🎁 EVALUACIÓN DIGITAL GRATUITA: Escanea el código QR para auditar la presencia en redes y web de tu empresa sin costo.</textarea>
+            </div>
+
+            <!-- QR Target Link -->
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-300">Enlace del QR (WhatsApp o Web)</label>
+                <input type="text" id="input-qr-url" value="https://wa.me/51987654321?text=Hola%20alo%20studio,%20vi%20su%20afiche%20y%20quiero%20una%20evaluación%20digital" oninput="updateQR()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 text-xs leading-relaxed">
+                💡 <strong>Consejo para la ferretería:</strong> Pega el afiche en una zona iluminada cerca de la caja de cobro o en la puerta de ingreso para máxima conversión.
+            </div>
+        </div>
+
+        <!-- Flyer Preview Container -->
+        <div class="lg:col-span-8 flex justify-center w-full overflow-x-auto pb-6">
+            <div id="flyer-canvas" class="print-area flyer-aspect w-full max-w-[595px] bg-[#1A1F26] text-white p-8 sm:p-10 rounded-2xl shadow-2xl border border-slate-800 flex flex-col justify-between transition-all duration-300 relative overflow-hidden">
+                
+                <!-- Background Accent Elements -->
+                <div id="bg-glow-1" class="absolute -top-20 -right-20 w-72 h-72 bg-blue-600/15 rounded-full blur-3xl pointer-events-none"></div>
+                <div id="bg-glow-2" class="absolute -bottom-20 -left-20 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <!-- HEADER SECTION -->
+                <div class="relative z-10 flex items-start justify-between border-b border-slate-700/60 pb-6">
+                    <div>
+                        <!-- Official Brand Logo Container (Supports SVG/Text or Image upload) -->
+                        <div id="logo-render-wrapper" class="flex flex-col items-start justify-center">
+                            
+                            <!-- Vector Logo View (100% Brand Replica) -->
+                            <div id="logo-vector-view" class="flex flex-col items-start">
+                                <div class="flex items-start gap-2">
+                                    <!-- Custom 'aló' Vector SVG Logotype -->
+                                    <svg id="logo-svg-wordmark" class="h-12 sm:h-14 w-auto text-white" viewBox="0 0 170 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <!-- Custom 'a' with signature lower loop -->
+                                        <path d="M 46 22 C 46 22, 32 20, 20 28 C 8 36, 4 50, 14 60 C 22 68, 36 66, 42 54 C 44 48, 38 42, 28 42 C 16 42, 8 50, 12 58 C 16 64, 28 62, 38 52 C 44 44, 46 34, 46 22 Z M 46 22 L 46 64" stroke="currentColor" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <!-- 'l' stem -->
+                                        <path d="M 66 18 L 66 64" stroke="currentColor" stroke-width="7.5" stroke-linecap="round"/>
+                                        <!-- 'ó' circle -->
+                                        <circle cx="106" cy="44" r="20" stroke="currentColor" stroke-width="7.5"/>
+                                        <!-- Accent mark on 'ó' -->
+                                        <path d="M 104 14 L 114 4" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+                                    </svg>
+
+                                    <!-- Signature Rounded Diagonal Blue Arrow -->
+                                    <svg class="w-8 h-8 sm:w-10 sm:h-10 text-blue-600 shrink-0 -mt-1" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M 12 36 L 12 26 C 12 18 18 12 26 12 L 36 12" stroke="currentColor" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M 24 12 L 36 12 L 36 24" stroke="currentColor" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </div>
+                                
+                                <!-- Studio Golden Text -->
+                                <div id="logo-studio" class="text-[#F59E0B] font-semibold text-xl tracking-tight pl-1 -mt-1">
+                                    Studio
+                                </div>
+                            </div>
+
+                            <!-- Uploaded Image Logo View -->
+                            <div id="logo-image-view" class="hidden">
+                                <img id="logo-custom-img" src="" alt="Logo aló studio" class="h-[65px] object-contain max-w-[260px]">
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="text-right">
+                        <span id="badge-ia" class="inline-block bg-blue-600/20 border border-blue-500/30 text-blue-400 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">
+                            Agencia Digital & IA
+                        </span>
+                        <p id="sub-tagline" class="text-[11px] text-slate-400 mt-2 max-w-[160px]">Transformación digital y automatización de ventas</p>
+                    </div>
+                </div>
+
+                <!-- MAIN HEADLINE -->
+                <div class="relative z-10 my-6">
+                    <h1 id="display-headline" class="text-2xl sm:text-3xl font-black text-white leading-tight tracking-tight">
+                        ¿Quieres digitalizar tu negocio y vender más?
+                    </h1>
+                    <p id="display-subtext" class="text-slate-300 text-sm mt-2 font-medium">
+                        Soluciones modernas de diseño, páginas web e Inteligencia Artificial para que tu marca destaque y crezca.
+                    </p>
+                </div>
+
+                <!-- SERVICES GRID -->
+                <div class="relative z-10 space-y-3 my-2">
+
+                    <!-- Service Item 1 -->
+                    <div id="card-service-1" class="bg-[#242B35] border border-slate-700/60 rounded-xl p-3.5 flex items-start gap-3.5 shadow-sm">
+                        <div class="bg-blue-600/20 text-blue-400 p-2.5 rounded-lg shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 id="serv-title-1" class="font-bold text-white text-base">Páginas Web & Landing Pages</h3>
+                            <p id="serv-desc-1" class="text-xs text-slate-300 mt-0.5 leading-snug">
+                                Sitios web rápidos, modernos y adaptados a celulares para captar clientes las 24 horas.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Service Item 2 -->
+                    <div id="card-service-2" class="bg-[#242B35] border border-slate-700/60 rounded-xl p-3.5 flex items-start gap-3.5 shadow-sm">
+                        <div class="bg-amber-500/20 text-amber-400 p-2.5 rounded-lg shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 id="serv-title-2" class="font-bold text-white text-base">Automatización & Herramientas IA</h3>
+                            <p id="serv-desc-2" class="text-xs text-slate-300 mt-0.5 leading-snug">
+                                Generación automática de flyers y capacitaciones prácticas de Inteligencia Artificial para tu equipo.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Service Item 3 -->
+                    <div id="card-service-3" class="bg-[#242B35] border border-slate-700/60 rounded-xl p-3.5 flex items-start gap-3.5 shadow-sm">
+                        <div class="bg-blue-600/20 text-blue-400 p-2.5 rounded-lg shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 id="serv-title-3" class="font-bold text-white text-base">Diseño de Redes & Planes de Contenido</h3>
+                            <p id="serv-desc-3" class="text-xs text-slate-300 mt-0.5 leading-snug">
+                                Piezas gráficas profesionales, flyers y contenido estratégico para transmitir confianza inmediata.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- OFFER / GIFT BANNER -->
+                <div id="card-offer" class="relative z-10 bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-500/40 rounded-xl p-3.5 my-2">
+                    <p id="display-offer" class="text-xs font-semibold text-amber-200 leading-relaxed text-center">
+                        🎁 EVALUACIÓN DIGITAL GRATUITA: Escanea el código QR para auditar la presencia en redes y web de tu empresa sin costo.
+                    </p>
+                </div>
+
+                <!-- FOOTER / CALL TO ACTION (QR & CONTACT) -->
+                <div id="card-footer" class="relative z-10 bg-[#11151C] border border-slate-700/80 rounded-2xl p-4 flex items-center justify-between gap-4 mt-2">
+                    <div class="space-y-2 flex-1">
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-amber-400 tracking-wider uppercase">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                            </svg>
+                            ¡Hablemos Hoy Mismo!
+                        </div>
+                        <div id="display-phone" class="text-lg sm:text-xl font-black text-white tracking-wide">
+                            +51 987 654 321
+                        </div>
+                        <div id="display-web" class="text-xs text-blue-400 font-semibold tracking-wide">
+                            www.alostudio.com
+                        </div>
+                        <p class="text-[10px] text-slate-400">Escanea con tu cámara de celular ↗</p>
+                    </div>
+
+                    <!-- QR CODE DISPLAY -->
+                    <div class="bg-white p-2 rounded-xl shadow-lg shrink-0 flex flex-col items-center justify-center">
+                        <img id="qr-image" src="" alt="Código QR WhatsApp" class="w-24 h-24 sm:w-28 sm:h-28 object-contain">
+                    </div>
+                </div>
+
+                <!-- FOOTER COPYRIGHT -->
+                <div class="relative z-10 text-center mt-3">
+                    <p id="footer-text" class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
+                        alo studio • Impulsando empresas y negocios locales
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- JS Logic -->
+    <script>
+        let currentLogoType = 'text';
+
+        // Toggle between Vector/Text logo and Custom Uploaded Image
+        function setLogoType(type) {
+            currentLogoType = type;
+            const vectorView = document.getElementById('logo-vector-view');
+            const imageView = document.getElementById('logo-image-view');
+            const uploadBox = document.getElementById('logo-upload-box');
+            
+            const btnText = document.getElementById('btn-logo-type-text');
+            const btnImg = document.getElementById('btn-logo-type-img');
+
+            if (type === 'image') {
+                vectorView.classList.add('hidden');
+                imageView.classList.remove('hidden');
+                uploadBox.classList.remove('hidden');
+
+                btnImg.className = "px-2.5 py-1.5 text-xs font-medium rounded-lg border border-blue-500 bg-blue-600/20 text-blue-300";
+                btnText.className = "px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-700 bg-slate-900 text-slate-400 hover:text-white";
+            } else {
+                vectorView.classList.remove('hidden');
+                imageView.classList.add('hidden');
+                uploadBox.classList.add('hidden');
+
+                btnText.className = "px-2.5 py-1.5 text-xs font-medium rounded-lg border border-blue-500 bg-blue-600/20 text-blue-300";
+                btnImg.className = "px-2.5 py-1.5 text-xs font-medium rounded-lg border border-slate-700 bg-slate-900 text-slate-400 hover:text-white";
+            }
+        }
+
+        // Handle Image Upload
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imgElement = document.getElementById('logo-custom-img');
+                imgElement.src = e.target.result;
+                setLogoType('image');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Adjust Logo Size Slider
+        function updateLogoSize() {
+            const height = document.getElementById('input-logo-height').value;
+            const imgElement = document.getElementById('logo-custom-img');
+            imgElement.style.height = `${height}px`;
+        }
+
+        // Update flyer text content live from controls
+        function updateFlyer() {
+            const phone = document.getElementById('input-phone').value;
+            const web = document.getElementById('input-web').value;
+            const headline = document.getElementById('input-headline').value;
+            const offer = document.getElementById('input-offer').value;
+
+            document.getElementById('display-phone').innerText = phone;
+            document.getElementById('display-web').innerText = web;
+            document.getElementById('display-headline').innerText = headline;
+            document.getElementById('display-offer').innerText = offer;
+        }
+
+        // Update QR Code Image URL dynamically
+        function updateQR() {
+            const qrUrl = document.getElementById('input-qr-url').value;
+            const qrImage = document.getElementById('qr-image');
+            
+            if (qrUrl.trim() === '') return;
+
+            const encoded = encodeURIComponent(qrUrl);
+            qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encoded}&margin=2`;
+        }
+
+        // Switch theme between Dark (default) and Light (Print friendly)
+        function setTheme(theme) {
+            const canvas = document.getElementById('flyer-canvas');
+            const logoWordmark = document.getElementById('logo-svg-wordmark');
+            const logoStudio = document.getElementById('logo-studio');
+            const displayHeadline = document.getElementById('display-headline');
+            const displaySubtext = document.getElementById('display-subtext');
+            const displayPhone = document.getElementById('display-phone');
+            const displayWeb = document.getElementById('display-web');
+            const footerCard = document.getElementById('card-footer');
+            const footerText = document.getElementById('footer-text');
+            
+            const btnDark = document.getElementById('btn-theme-dark');
+            const btnLight = document.getElementById('btn-theme-light');
+
+            const cardServices = [
+                document.getElementById('card-service-1'),
+                document.getElementById('card-service-2'),
+                document.getElementById('card-service-3')
+            ];
+
+            const titleServices = [
+                document.getElementById('serv-title-1'),
+                document.getElementById('serv-title-2'),
+                document.getElementById('serv-title-3')
+            ];
+
+            const descServices = [
+                document.getElementById('serv-desc-1'),
+                document.getElementById('serv-desc-2'),
+                document.getElementById('serv-desc-3')
+            ];
+
+            if (theme === 'light') {
+                // Light Mode Styling
+                canvas.className = canvas.className.replace('bg-[#1A1F26]', 'bg-white').replace('border-slate-800', 'border-slate-300');
+                if (logoWordmark) logoWordmark.className = logoWordmark.className.replace('text-white', 'text-slate-900');
+                logoStudio.className = logoStudio.className.replace('text-amber-400', 'text-amber-600');
+                displayHeadline.className = displayHeadline.className.replace('text-white', 'text-slate-900');
+                displaySubtext.className = displaySubtext.className.replace('text-slate-300', 'text-slate-600');
+                
+                cardServices.forEach(card => {
+                    card.className = card.className.replace('bg-[#242B35]', 'bg-slate-50').replace('border-slate-700/60', 'border-slate-200');
+                });
+
+                titleServices.forEach(title => {
+                    title.className = title.className.replace('text-white', 'text-slate-900');
+                });
+
+                descServices.forEach(desc => {
+                    desc.className = desc.className.replace('text-slate-300', 'text-slate-600');
+                });
+
+                footerCard.className = footerCard.className.replace('bg-[#11151C]', 'bg-slate-100').replace('border-slate-700/80', 'border-slate-300');
+                displayPhone.className = displayPhone.className.replace('text-white', 'text-slate-900');
+                displayWeb.className = displayWeb.className.replace('text-blue-400', 'text-blue-600');
+                footerText.className = footerText.className.replace('text-slate-400', 'text-slate-500');
+
+                // Buttons active state
+                btnLight.className = "px-3 py-2 text-xs font-semibold rounded-lg border border-blue-500 bg-slate-900 text-white flex items-center justify-center gap-2";
+                btnDark.className = "px-3 py-2 text-xs font-semibold rounded-lg border border-slate-600 bg-slate-700 text-slate-300 flex items-center justify-center gap-2 hover:bg-slate-600";
+            } else {
+                // Dark Mode Styling
+                canvas.className = canvas.className.replace('bg-white', 'bg-[#1A1F26]').replace('border-slate-300', 'border-slate-800');
+                if (logoWordmark) logoWordmark.className = logoWordmark.className.replace('text-slate-900', 'text-white');
+                logoStudio.className = logoStudio.className.replace('text-amber-600', 'text-amber-400');
+                displayHeadline.className = displayHeadline.className.replace('text-slate-900', 'text-white');
+                displaySubtext.className = displaySubtext.className.replace('text-slate-600', 'text-slate-300');
+
+                cardServices.forEach(card => {
+                    card.className = card.className.replace('bg-slate-50', 'bg-[#242B35]').replace('border-slate-200', 'border-slate-700/60');
+                });
+
+                titleServices.forEach(title => {
+                    title.className = title.className.replace('text-slate-900', 'text-white');
+                });
+
+                descServices.forEach(desc => {
+                    desc.className = desc.className.replace('text-slate-600', 'text-slate-300');
+                });
+
+                footerCard.className = footerCard.className.replace('bg-slate-100', 'bg-[#11151C]').replace('border-slate-300', 'border-slate-700/80');
+                displayPhone.className = displayPhone.className.replace('text-slate-900', 'text-white');
+                displayWeb.className = displayWeb.className.replace('text-blue-600', 'text-blue-400');
+                footerText.className = footerText.className.replace('text-slate-500', 'text-slate-400');
+
+                // Buttons active state
+                btnDark.className = "px-3 py-2 text-xs font-semibold rounded-lg border border-blue-500 bg-slate-900 text-white flex items-center justify-center gap-2";
+                btnLight.className = "px-3 py-2 text-xs font-semibold rounded-lg border border-slate-600 bg-slate-700 text-slate-300 flex items-center justify-center gap-2 hover:bg-slate-600";
+            }
+        }
+
+        // Initial setup
+        window.onload = function() {
+            updateFlyer();
+            updateQR();
+        };
+    </script>
+</body>
+</html>
