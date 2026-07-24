@@ -51,11 +51,14 @@
                 display: none !important;
             }
             .print-area {
+                box-sizing: border-box !important;
                 box-shadow: none !important;
                 border: none !important;
-                width: 100vw !important;
-                height: 100vh !important;
+                width: 210mm !important;
+                height: 297mm !important;
                 max-width: none !important;
+                max-height: none !important;
+                aspect-ratio: unset !important;
                 padding: 12mm 15mm !important;
                 margin: 0 !important;
                 border-radius: 0 !important;
@@ -144,18 +147,31 @@
                 </div>
 
                 <!-- File Upload Box (Hidden by default until 'image' is chosen or used directly) -->
-                <div id="logo-upload-box" class="space-y-2 hidden pt-1">
-                    <div class="flex items-center justify-center w-full">
-                        <label class="flex flex-col items-center justify-center w-full h-20 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-900/60 hover:bg-slate-900 hover:border-blue-500 transition-all">
-                            <div class="flex flex-col items-center justify-center pt-2 pb-2">
-                                <svg class="w-6 h-6 text-slate-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                                <p class="text-xs text-slate-300 font-medium">Seleccionar imagen PNG</p>
-                                <p class="text-[10px] text-slate-500">Fondo transparente recomendado</p>
-                            </div>
-                            <input id="input-logo-file" type="file" accept="image/*" onchange="handleLogoUpload(event)" class="hidden" />
-                        </label>
+                <div id="logo-upload-box" class="space-y-3 hidden pt-1">
+                    <p class="text-[10px] text-slate-500 leading-relaxed">Sube una versión del logo para cada fondo, así siempre se lee bien al cambiar de tema.</p>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <!-- Logo for Dark Background -->
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-500 shrink-0"></span> Fondo oscuro
+                            </label>
+                            <label class="flex flex-col items-center justify-center w-full h-16 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-900/60 hover:bg-slate-900 hover:border-blue-500 transition-all px-1 text-center">
+                                <span id="logo-dark-filename" class="text-[10px] text-slate-400 leading-snug">Logo claro / blanco</span>
+                                <input id="input-logo-file-dark" type="file" accept="image/*" onchange="handleLogoUpload(event, 'dark')" class="hidden" />
+                            </label>
+                        </div>
+
+                        <!-- Logo for Light Background -->
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-white border border-slate-300 shrink-0"></span> Fondo claro
+                            </label>
+                            <label class="flex flex-col items-center justify-center w-full h-16 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-900/60 hover:bg-slate-900 hover:border-blue-500 transition-all px-1 text-center">
+                                <span id="logo-light-filename" class="text-[10px] text-slate-400 leading-snug">Logo oscuro / color</span>
+                                <input id="input-logo-file-light" type="file" accept="image/*" onchange="handleLogoUpload(event, 'light')" class="hidden" />
+                            </label>
+                        </div>
                     </div>
 
                     <div class="flex items-center gap-2">
@@ -364,6 +380,8 @@
     <!-- JS Logic -->
     <script>
         let currentLogoType = 'text';
+        let currentTheme = 'dark';
+        let logoImages = { dark: null, light: null };
 
         // Toggle between Vector/Text logo and Custom Uploaded Image
         function setLogoType(type) {
@@ -392,18 +410,32 @@
             }
         }
 
-        // Handle Image Upload
-        function handleLogoUpload(event) {
+        // Handle Image Upload (separate logo per theme so it stays legible on both backgrounds)
+        function handleLogoUpload(event, mode) {
             const file = event.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
             reader.onload = function(e) {
-                const imgElement = document.getElementById('logo-custom-img');
-                imgElement.src = e.target.result;
+                logoImages[mode] = e.target.result;
+                // Seed the other slot the first time so a logo shows immediately on both themes
+                if (!logoImages.dark) logoImages.dark = e.target.result;
+                if (!logoImages.light) logoImages.light = e.target.result;
+
+                const filenameEl = document.getElementById(mode === 'dark' ? 'logo-dark-filename' : 'logo-light-filename');
+                if (filenameEl) filenameEl.textContent = file.name;
+
                 setLogoType('image');
+                applyLogoForTheme(currentTheme);
             };
             reader.readAsDataURL(file);
+        }
+
+        // Show the logo variant matching the active theme
+        function applyLogoForTheme(theme) {
+            const imgElement = document.getElementById('logo-custom-img');
+            const src = logoImages[theme] || logoImages.dark || logoImages.light;
+            if (src) imgElement.src = src;
         }
 
         // Adjust Logo Size Slider
@@ -439,6 +471,9 @@
 
         // Switch theme between Dark (default) and Light (Print friendly)
         function setTheme(theme) {
+            currentTheme = theme;
+            applyLogoForTheme(theme);
+
             const canvas = document.getElementById('flyer-canvas');
             const logoWordmark = document.getElementById('logo-svg-wordmark');
             const logoStudio = document.getElementById('logo-studio');
