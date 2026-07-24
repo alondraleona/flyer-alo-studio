@@ -40,6 +40,12 @@
                 background: white !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                overflow: hidden !important;
+                display: flex !important;
+                align-items: flex-start !important;
+                justify-content: center !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
@@ -62,7 +68,8 @@
                 padding: 12mm 15mm !important;
                 margin: 0 !important;
                 border-radius: 0 !important;
-                page-break-after: always;
+                overflow: hidden !important;
+                transform-origin: top center;
             }
             @page {
                 size: A4 portrait;
@@ -569,6 +576,32 @@
             updateFlyer();
             updateQR();
         };
+
+        // Shrink the flyer with `zoom` (not transform) so it always fits on a single
+        // A4 page. Some browsers (Safari/WebKit) paginate onto a second page when the
+        // content is taller than the page, even with overflow:hidden set, because that
+        // rule only clips paint and doesn't stop print pagination. Reducing `zoom`
+        // shrinks the actual layout box before that pagination check happens.
+        function fitFlyerToPage() {
+            const canvas = document.getElementById('flyer-canvas');
+            if (!canvas) return;
+
+            canvas.style.zoom = 1;
+
+            const mmToPx = 96 / 25.4;
+            const pageHeightPx = 297 * mmToPx;
+            const contentHeightPx = canvas.scrollHeight;
+
+            if (contentHeightPx > pageHeightPx) {
+                canvas.style.zoom = pageHeightPx / contentHeightPx;
+            }
+        }
+
+        window.addEventListener('beforeprint', fitFlyerToPage);
+        window.addEventListener('afterprint', function() {
+            const canvas = document.getElementById('flyer-canvas');
+            if (canvas) canvas.style.zoom = 1;
+        });
     </script>
 </body>
 </html>
